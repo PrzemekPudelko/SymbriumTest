@@ -16,7 +16,6 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //Scanner scanner = new Scanner(System.in);
         Datasource datasource = new Datasource();
         if (!datasource.open(scanner)) {
             System.out.println("Can't open datasource");
@@ -29,6 +28,13 @@ public class Main {
             return;
         }
 
+        process(measurements);
+        scanner.close();
+        datasource.close();
+    }
+
+    // Method to process the Measurements as specified in the directions
+    public static void process(List<Measurement> measurements) {
         Collections.sort(measurements);
         try {
             FileWriter csvWriter = new FileWriter("summary.csv");
@@ -36,13 +42,7 @@ public class Main {
                     "Max Height", "Max Height Location", "Mean Height","Height Range",
                     "Average Roughness", "Root Mean Square Roughness (Standard Deviation)",
                     "Measurements Inside Filter", "Measurements Outside Filter"};
-            for(int i = 0; i < header.length; i++) {
-                if(i < header.length-1) {
-                    csvWriter.write(header[i] + ", ");
-                } else {
-                    csvWriter.write(header[i] + "\n");
-                }
-            }
+            csvWrite(csvWriter, header);
 
             System.out.println("How many standard deviations to use as a filter? (Default is 3)");
             String input = scanner.next();
@@ -68,26 +68,32 @@ public class Main {
                 }
 
                 String[] data = calculateTest(list, i, numFilter);
-                for(int j = 0; j < data.length; j++) {
-                    if(j < data.length -1) {
-                        csvWriter.write(data[j] + ", ");
-                    } else {
-                        csvWriter.write(data[j] + "\n");
-                    }
-                }
+                csvWrite(csvWriter, data);
                 csvWriter.write("\n");
-
             }
             csvWriter.close();
 
         } catch (IOException e) {
             System.out.println("Writing error: " + e.getMessage());
         }
-
-        scanner.close();
-        datasource.close();
     }
 
+    // Method to write the array of Strings to the .csv file
+    public static void csvWrite(FileWriter csvWriter, String[] data) {
+        try {
+            for(int j = 0; j < data.length; j++) {
+                if(j < data.length -1) {
+                    csvWriter.write(data[j] + ", ");
+                } else {
+                    csvWriter.write(data[j] + "\n");
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Writing error: " + e.getMessage());
+        }
+    }
+
+    // Method where all the calculations actually occur
     public static String[] calculateTest(List<Measurement> measurements, int test_uid, int numFilter) {
         if(measurements == null || measurements.size()==0) {
             System.out.println("No measurements for Test " + test_uid);
