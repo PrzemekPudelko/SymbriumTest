@@ -73,7 +73,7 @@ public class Main {
     public static String[] calculateTest(List<Measurement> measurements, int test_uid) {
         if(measurements == null || measurements.size()==0) {
             System.out.println("No measurements for Test " + test_uid);
-            String[] summary = {"No Measurements for Test "+ test_uid};
+            String[] summary = {test_uid+"", null, null, null ,null ,null, null, null, null};
             return summary;
         }
         double minHeight = Double.MAX_EXPONENT;
