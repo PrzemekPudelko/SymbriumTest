@@ -18,9 +18,8 @@ public class Datasource {
 
     private Connection conn;
 
-    public boolean open() {
+    public boolean open(Scanner scanner) {
         try {
-            Scanner scanner = new Scanner(System.in);
             System.out.println("Enter path to the database: ");
             String path = scanner.next();
             conn = DriverManager.getConnection(CONNECTION_STRING + path);

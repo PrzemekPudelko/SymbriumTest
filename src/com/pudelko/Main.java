@@ -3,18 +3,22 @@ package com.pudelko;
 import com.pudelko.model.Datasource;
 import com.pudelko.model.Measurement;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
 
 public class Main {
+    private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
 
+        //Scanner scanner = new Scanner(System.in);
         Datasource datasource = new Datasource();
-        if (!datasource.open()) {
+        if (!datasource.open(scanner)) {
             System.out.println("Can't open datasource");
             return;
         }
@@ -30,7 +34,8 @@ public class Main {
             FileWriter csvWriter = new FileWriter("summary.csv");
             String[] header = {"Test_UID", "Min Height", "Min Height Location",
                     "Max Height", "Max Height Location", "Mean Height","Height Range",
-                    "Average Roughness", "Root Mean Square Roughness"};
+                    "Average Roughness", "Root Mean Square Roughness (Standard Deviation)",
+                    "Measurements Inside Filter", "Measurements Outside Filter"};
             for(int i = 0; i < header.length; i++) {
                 if(i < header.length-1) {
                     csvWriter.write(header[i] + ", ");
@@ -38,6 +43,18 @@ public class Main {
                     csvWriter.write(header[i] + "\n");
                 }
             }
+
+            System.out.println("How many standard deviations to use as a filter? (Default is 3)");
+            String input = scanner.next();
+            int numFilter = 3;
+            try {
+                numFilter = Integer.parseInt(input);
+            } catch (NumberFormatException e){
+                System.out.println("Error: Integer not inputted.");
+            } finally {
+                System.out.println("Filtering to " + numFilter+ " standard deviations.");
+            }
+
             int count = 0;
             // measurements list is sorted by test_uid
             // so we can set the for loop limit to the test_uid of the last element
@@ -50,7 +67,7 @@ public class Main {
                     count++;
                 }
 
-                String[] data = calculateTest(list, i);
+                String[] data = calculateTest(list, i, numFilter);
                 for(int j = 0; j < data.length; j++) {
                     if(j < data.length -1) {
                         csvWriter.write(data[j] + ", ");
@@ -67,15 +84,17 @@ public class Main {
             System.out.println("Writing error: " + e.getMessage());
         }
 
+        scanner.close();
         datasource.close();
     }
 
-    public static String[] calculateTest(List<Measurement> measurements, int test_uid) {
+    public static String[] calculateTest(List<Measurement> measurements, int test_uid, int numFilter) {
         if(measurements == null || measurements.size()==0) {
             System.out.println("No measurements for Test " + test_uid);
             String[] summary = {test_uid+"", null, null, null ,null ,null, null, null, null};
             return summary;
         }
+
         double minHeight = Double.MAX_EXPONENT;
         int minHeightLocation = 0;
         double maxHeight = Double.MIN_EXPONENT;
@@ -105,10 +124,23 @@ public class Main {
         double averageRoughness = calculateAverageRoughness(heightList, meanHeight);
         double rootMeanSquareRoughness = calculateRootMeanSquareRoughness(heightList, meanHeight);
 
+        int countInsideFilter = 0;
+        int countOutsideFilter = 0;
+        double bottomFilter = meanHeight - (numFilter*rootMeanSquareRoughness);
+        double topFilter = meanHeight + (numFilter*rootMeanSquareRoughness);
+        for(Measurement measurement: measurements) {
+            double currentHeight = measurement.getHeight();
+            if((currentHeight < meanHeight && currentHeight < bottomFilter) ||
+                    (currentHeight > meanHeight && currentHeight > topFilter)) {
+                countOutsideFilter++;
+            } else {
+                countInsideFilter++;
+            }
+        }
 
         String[] data = {test_uid+"", minHeight+"", minHeightLocation+"", maxHeight+"",
                 maxHeightLocation+"", meanHeight+"", heightRange+"",
-                averageRoughness+"", rootMeanSquareRoughness+""};
+                averageRoughness+"", rootMeanSquareRoughness+"", countInsideFilter+"", countOutsideFilter+""};
         return data;
     }
 
@@ -137,4 +169,5 @@ public class Main {
         }
         return Math.sqrt(sum/list.size());
     }
+
 }
