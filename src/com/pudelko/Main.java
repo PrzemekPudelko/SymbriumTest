@@ -28,6 +28,16 @@ public class Main {
         Collections.sort(measurements);
         try {
             FileWriter csvWriter = new FileWriter("summary.csv");
+            String[] header = {"Test_UID", "Min Height", "Min Height Location",
+                    "Max Height", "Max Height Location", "Mean Height","Height Range",
+                    "Average Roughness", "Root Mean Square Roughness"};
+            for(int i = 0; i < header.length; i++) {
+                if(i < header.length-1) {
+                    csvWriter.write(header[i] + ", ");
+                } else {
+                    csvWriter.write(header[i] + "\n");
+                }
+            }
             int count = 0;
             // measurements list is sorted by test_uid
             // so we can set the for loop limit to the test_uid of the last element
@@ -40,12 +50,12 @@ public class Main {
                     count++;
                 }
 
-                String[] summary = calculateTest(list, i);
-                for(int j = 0; j < summary.length; j++) {
-                    csvWriter.write(summary[j]);
-                    j++;
-                    if(j < summary.length) {
-                        csvWriter.write(summary[j] + "\n");
+                String[] data = calculateTest(list, i);
+                for(int j = 0; j < data.length; j++) {
+                    if(j < data.length -1) {
+                        csvWriter.write(data[j] + ", ");
+                    } else {
+                        csvWriter.write(data[j] + "\n");
                     }
                 }
                 csvWriter.write("\n");
@@ -63,7 +73,7 @@ public class Main {
     public static String[] calculateTest(List<Measurement> measurements, int test_uid) {
         if(measurements == null || measurements.size()==0) {
             System.out.println("No measurements for Test " + test_uid);
-            String[] summary = {"No Measurements for Test "+ test_uid+ "\n"};
+            String[] summary = {"No Measurements for Test "+ test_uid};
             return summary;
         }
         double minHeight = Double.MAX_EXPONENT;
@@ -96,11 +106,10 @@ public class Main {
         double rootMeanSquareRoughness = calculateRootMeanSquareRoughness(heightList, meanHeight);
 
 
-        String[] summary = {"Test: ", test_uid+"", "Min Height: ", minHeight+"", "Min Height Location: ",
-                minHeightLocation+"", "Max Height: ", maxHeight+"", "Max Height Location: ", maxHeightLocation+"",
-                "Mean Height: ", meanHeight+"","Height Range: ", heightRange+"", "Average Roughness: ",
-                averageRoughness+"", "Root Mean Square Roughness: ", rootMeanSquareRoughness+""};
-        return summary;
+        String[] data = {test_uid+"", minHeight+"", minHeightLocation+"", maxHeight+"",
+                maxHeightLocation+"", meanHeight+"", heightRange+"",
+                averageRoughness+"", rootMeanSquareRoughness+""};
+        return data;
     }
 
     public static double calculateAverageRoughness(List<Double> list, double meanElevation) {
